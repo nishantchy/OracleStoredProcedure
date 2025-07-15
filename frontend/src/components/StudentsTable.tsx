@@ -2,11 +2,18 @@
 import React, { useState } from "react";
 import { useStudents } from "../service/queries";
 import { mutate } from "swr";
+import UpdateStudent from "./UpdateStudent";
+import DeleteStudent from "./DeleteStudent";
+import { Student } from "../types/Students";
 
 export default function StudentsTable() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showUpdate, setShowUpdate] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
 
   const { data, error, isLoading } = useStudents({ search, page, pageSize });
 
@@ -72,6 +79,7 @@ export default function StudentsTable() {
                 <th className="px-4 py-2 text-left">Phone</th>
                 <th className="px-4 py-2 text-left">Gender</th>
                 <th className="px-4 py-2 text-left">Date of Birth</th>
+                <th className="px-4 py-2 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -85,6 +93,41 @@ export default function StudentsTable() {
                   <td className="px-4 py-2">{student.phone || "-"}</td>
                   <td className="px-4 py-2 capitalize">{student.gender}</td>
                   <td className="px-4 py-2">{student.date_of_birth || "-"}</td>
+                  <td className="px-4 py-2 relative">
+                    <button
+                      className="px-2 py-1 rounded hover:bg-gray-100"
+                      onClick={() =>
+                        setDropdownOpen(dropdownOpen === idx ? null : idx)
+                      }
+                      aria-label="Actions"
+                    >
+                      <span style={{ fontSize: 20 }}>⋯</span>
+                    </button>
+                    {dropdownOpen === idx && (
+                      <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow z-10">
+                        <button
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                          onClick={() => {
+                            setSelectedStudent(student);
+                            setShowUpdate(true);
+                            setDropdownOpen(null);
+                          }}
+                        >
+                          Update
+                        </button>
+                        <button
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                          onClick={() => {
+                            setSelectedStudent(student);
+                            setShowDelete(true);
+                            setDropdownOpen(null);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -111,6 +154,20 @@ export default function StudentsTable() {
             </div>
           </div>
         </>
+      )}
+      {showUpdate && selectedStudent && (
+        <UpdateStudent
+          student={selectedStudent}
+          onClose={() => setShowUpdate(false)}
+          onUpdated={() => setSelectedStudent(null)}
+        />
+      )}
+      {showDelete && selectedStudent && (
+        <DeleteStudent
+          student={selectedStudent}
+          onClose={() => setShowDelete(false)}
+          onDeleted={() => setSelectedStudent(null)}
+        />
       )}
     </div>
   );

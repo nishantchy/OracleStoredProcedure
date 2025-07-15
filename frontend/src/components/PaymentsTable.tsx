@@ -1,11 +1,20 @@
 "use client";
 import React, { useState } from "react";
 import { usePayments } from "../service/queries";
+import { Payment } from "../types/Payments";
+
+// Placeholder imports for future UpdatePayment and DeletePayment components
+import UpdatePayment from "./UpdatePayment";
+import DeletePayment from "./DeletePayment";
 
 export default function PaymentsTable() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [showUpdate, setShowUpdate] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState<number | null>(null);
 
   const { data, error, isLoading } = usePayments({ search, page, pageSize });
 
@@ -55,14 +64,18 @@ export default function PaymentsTable() {
                 <th className="px-4 py-2 text-left">Amount</th>
                 <th className="px-4 py-2 text-left">Cheque Number</th>
                 <th className="px-4 py-2 text-left">Paid Date</th>
+                <th className="px-4 py-2 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
               {payments.map((payment, idx) => (
                 <tr
-                  key={`${payment.student_id}-${payment.amount}-${
-                    payment.paid_date || ""
-                  }-${idx}`}
+                  key={
+                    payment.id ||
+                    `${payment.student_id}-${payment.amount}-${
+                      payment.paid_date || ""
+                    }-${idx}`
+                  }
                   className="border-t"
                 >
                   <td className="px-4 py-2">
@@ -72,6 +85,41 @@ export default function PaymentsTable() {
                   <td className="px-4 py-2">{payment.amount}</td>
                   <td className="px-4 py-2">{payment.cheque_number || "-"}</td>
                   <td className="px-4 py-2">{payment.paid_date || "-"}</td>
+                  <td className="px-4 py-2 relative">
+                    <button
+                      className="px-2 py-1 rounded hover:bg-gray-100"
+                      onClick={() =>
+                        setDropdownOpen(dropdownOpen === idx ? null : idx)
+                      }
+                      aria-label="Actions"
+                    >
+                      <span style={{ fontSize: 20 }}>⋯</span>
+                    </button>
+                    {dropdownOpen === idx && (
+                      <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow z-10">
+                        <button
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                          onClick={() => {
+                            setSelectedPayment(payment);
+                            setShowUpdate(true);
+                            setDropdownOpen(null);
+                          }}
+                        >
+                          Update
+                        </button>
+                        <button
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                          onClick={() => {
+                            setSelectedPayment(payment);
+                            setShowDelete(true);
+                            setDropdownOpen(null);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -98,6 +146,21 @@ export default function PaymentsTable() {
             </div>
           </div>
         </>
+      )}
+      {/* Modals for update and delete */}
+      {showUpdate && selectedPayment && (
+        <UpdatePayment
+          payment={selectedPayment}
+          onClose={() => setShowUpdate(false)}
+          onUpdated={() => setSelectedPayment(null)}
+        />
+      )}
+      {showDelete && selectedPayment && (
+        <DeletePayment
+          payment={selectedPayment}
+          onClose={() => setShowDelete(false)}
+          onDeleted={() => setSelectedPayment(null)}
+        />
       )}
     </div>
   );
