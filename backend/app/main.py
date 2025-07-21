@@ -11,11 +11,6 @@ from .routes import router
 @asynccontextmanager
 async def lifespan(app):
     create_students_table()
-    yield
-
-
-@asynccontextmanager
-async def lifespan(app):
     create_payments_table()
     yield
 
